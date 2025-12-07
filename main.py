@@ -56,28 +56,44 @@ if not "initialized" in st.session_state:
 ############################################################
 # 4. 初期表示
 ############################################################
+# # タイトル表示
+# cn.display_app_title()
+
+# # # モード表示
+# # cn.display_select_mode()
+
+# # AIメッセージの初期表示
+# cn.display_initial_ai_message()
+
+
+# 【問題3】
+## --- 1. メインエリアの表示項目 ---
 # タイトル表示
 cn.display_app_title()
 
-# # モード表示
-# cn.display_select_mode()
+with st.chat_message("assistant"):
+    st.markdown("こんにちは。私は社内文書の情報をもとに回答する生成AIチャットボットです。上記で利用目的を選択し、画面下部のチャット欄からメッセージを送信してください。")
 
-# AIメッセージの初期表示
-cn.display_initial_ai_message()
 
-# 【問題3】
-# サイドバー（左側）の表示設定
+## --- 1. サイドバーの表示項目 ---
 with st.sidebar:
-    # # 1. タイトル（利用目的など）をサイドバーに表示
-    # # ※cn.display_app_title() を使うか、直接 st.header("利用目的") と書くかプレビューに合わせます
-    # cn.display_app_title()
-
-    # 2. モード選択（ラジオボタン）をサイドバーに表示
+    # アプリタイトルの表示
+    cn.display_app_title()
+    
+    st.markdown("### 利用目的")
+    # モード選択（ラジオボタン）
     cn.display_select_mode()
 
-    # 3. 初期説明文（「社内文書検索を選択した場合」などの解説）をサイドバーに表示
-    cn.display_initial_ai_message()
+    st.divider() # 区切り線
 
+    # 各モードの説明文を表示
+    st.markdown("**【「社内文書検索」を選択した場合】**")
+    st.info("入力内容と関連性が高い社内文書のありかを検索できます。")
+    st.code("【入力例】\n社員の育成方針に関するMTGの議事録", wrap_lines=True, language=None)
+
+    st.markdown("**【「社内問い合わせ」を選択した場合】**")
+    st.info("質問・要望に対して、社内文書の情報をもとに回答を得られます。")
+    st.code("【入力例】\n人事部に所属している従業員情報を一覧化して", wrap_lines=True, language=None)
 
 ############################################################
 # 5. 会話ログの表示
