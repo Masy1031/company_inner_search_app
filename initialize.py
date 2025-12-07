@@ -27,6 +27,10 @@ import constants as ct
 # 「.env」ファイルで定義した環境変数の読み込み
 load_dotenv()
 
+# 【問題2】マジックナンバーの変数化
+CHUNK_SIZE = 500         # ドキュメント分割の文字数
+CHUNK_OVERLAP = 50       # 分割時の重なり文字数
+RETRIEVAL_K = 5          # 【問題1】関連ドキュメントの取得数（3から5へ変更）
 
 ############################################################
 # 関数定義
@@ -122,9 +126,15 @@ def initialize_retriever():
     embeddings = OpenAIEmbeddings()
     
     # チャンク分割用のオブジェクトを作成
+    # text_splitter = CharacterTextSplitter(
+    #     chunk_size=500,
+    #     chunk_overlap=50,
+    #     separator="\n"
+    # )
+    # 【問題2】チャンク分割用のオブジェクトを作成（定数を使用）
     text_splitter = CharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
         separator="\n"
     )
 
@@ -135,7 +145,9 @@ def initialize_retriever():
     db = Chroma.from_documents(splitted_docs, embedding=embeddings)
 
     # ベクターストアを検索するRetrieverの作成
-    st.session_state.retriever = db.as_retriever(search_kwargs={"k": 3})
+    # st.session_state.retriever = db.as_retriever(search_kwargs={"k": 3})
+    ## 【問題1 & 2】ベクターストアを検索するRetrieverの作成（定数 RETRIEVAL_K = 5 を使用）
+    st.session_state.retriever = db.as_retriever(search_kwargs={"k": RETRIEVAL_K})
 
 
 def initialize_session_state():

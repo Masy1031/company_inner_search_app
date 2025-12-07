@@ -56,14 +56,27 @@ if not "initialized" in st.session_state:
 ############################################################
 # 4. 初期表示
 ############################################################
-# タイトル表示
-cn.display_app_title()
+# # タイトル表示
+# cn.display_app_title()
 
-# モード表示
-cn.display_select_mode()
+# # モード表示
+# cn.display_select_mode()
 
-# AIメッセージの初期表示
-cn.display_initial_ai_message()
+# # AIメッセージの初期表示
+# cn.display_initial_ai_message()
+
+# 【問題3】
+# サイドバー（左側）の表示設定
+with st.sidebar:
+    # 1. タイトル（利用目的など）をサイドバーに表示
+    # ※cn.display_app_title() を使うか、直接 st.header("利用目的") と書くかプレビューに合わせます
+    cn.display_app_title()
+
+    # 2. モード選択（ラジオボタン）をサイドバーに表示
+    cn.display_select_mode()
+
+    # 3. 初期説明文（「社内文書検索を選択した場合」などの解説）をサイドバーに表示
+    cn.display_initial_ai_message()
 
 
 ############################################################
