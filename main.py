@@ -72,14 +72,12 @@ if not "initialized" in st.session_state:
 cn.display_app_title()
 
 with st.chat_message("assistant"):
-    st.markdown("こんにちは。私は社内文書の情報をもとに回答する生成AIチャットボットです。上記で利用目的を選択し、画面下部のチャット欄からメッセージを送信してください。")
+    st.success("こんにちは。私は社内文書の情報をもとに回答する生成AIチャットボットです。上記で利用目的を選択し、画面下部のチャット欄からメッセージを送信してください。")
+    st.warning("具体的に入力したほうが期待通りの回答を得やすいです。")
 
 
 ## --- 1. サイドバーの表示項目 ---
 with st.sidebar:
-    # アプリタイトルの表示
-    cn.display_app_title()
-    
     st.markdown("### 利用目的")
     # モード選択（ラジオボタン）
     cn.display_select_mode()
