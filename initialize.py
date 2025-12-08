@@ -211,22 +211,62 @@ def recursive_file_check(path, docs_all):
         file_load(path, docs_all)
 
 
+# def file_load(path, docs_all):
+#     """
+#     ファイル内のデータ読み込み
+
+#     Args:
+#         path: ファイルパス
+#         docs_all: データソースを格納する用のリスト
+#     """
+#     # ファイルの拡張子を取得
+#     file_extension = os.path.splitext(path)[1]
+#     # ファイル名（拡張子を含む）を取得
+#     file_name = os.path.basename(path)
+
+#     # 想定していたファイル形式の場合のみ読み込む
+#     if file_extension in ct.SUPPORTED_EXTENSIONS:
+#         # ファイルの拡張子に合ったdata loaderを使ってデータ読み込み
+#         loader = ct.SUPPORTED_EXTENSIONS[file_extension](path)
+#         docs = loader.load()
+#         docs_all.extend(docs)
+
 def file_load(path, docs_all):
-    """
-    ファイル内のデータ読み込み
-
-    Args:
-        path: ファイルパス
-        docs_all: データソースを格納する用のリスト
-    """
-    # ファイルの拡張子を取得
     file_extension = os.path.splitext(path)[1]
-    # ファイル名（拡張子を含む）を取得
-    file_name = os.path.basename(path)
+    
+    # --- 【問題6】修正内容 ---
+    if file_extension == ".csv":
+        import pandas as pd
+        from langchain.schema import Document
+        
+        try:
+            # 1. CSVファイルを読み込み（Shift-JIS/UTF-8両対応）
+            try:
+                df = pd.read_csv(path, encoding="shift-jis")
+            except:
+                df = pd.read_csv(path, encoding="utf-8")
+            
+            # 2. 検索精度を上げるためのヘッダー情報を追加
+            # 検索時に「社員名簿」や「全従業員」というキーワードでヒットしやすくします
+            combined_text = f"【社員名簿情報: {os.path.basename(path)}】\n"
+            combined_text += "人事部、営業部を含む全従業員の氏名・部署・役職の一覧リストです。\n\n"
+            
+            # 3. 全行を1つのテキストに結合
+            for _, row in df.iterrows():
+                # 「氏名: 〇〇, 部署: △△」といった形式で一行ずつ連結
+                line = " / ".join([f"{col}: {val}" for col, val in row.items()])
+                combined_text += line + "\n"
+            
+            # 4. 1つの巨大なドキュメントとして追加
+            # これにより、K=5の検索枠を消費せずに全員分の情報をLLMへ渡せます
+            docs_all.append(Document(page_content=combined_text, metadata={"source": path}))
+            
+        except Exception as e:
+            # エラー発生時のログ（loggerが利用可能な環境ならlogger.error）
+            st.error(f"CSV読み込み失敗: {e}")
 
-    # 想定していたファイル形式の場合のみ読み込む
-    if file_extension in ct.SUPPORTED_EXTENSIONS:
-        # ファイルの拡張子に合ったdata loaderを使ってデータ読み込み
+    # --- その他のファイル形式（pdf, docx, txt）は通常ルート ---
+    elif file_extension in ct.SUPPORTED_EXTENSIONS:
         loader = ct.SUPPORTED_EXTENSIONS[file_extension](path)
         docs = loader.load()
         docs_all.extend(docs)
