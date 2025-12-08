@@ -196,27 +196,23 @@ def display_search_llm_response(llm_response):
         
         # 修正
         for document in llm_response["context"][1:]:
-            # ドキュメントのファイルパスとページ番号を取得
             sub_file_path = document.metadata["source"]
-            # getメソッドを使い、pageがない場合（txtなど）に備える
+            # ページ番号を取得（メタデータにない場合に備えて .get() を使用）
             sub_page_number = document.metadata.get("page", None)
 
-            # 1. メインドキュメントと「パス」かつ「ページ番号」が一致する場合のみスキップ
+            # 1. 「メインとパスが同じ」かつ「ページ番号も同じ」場合のみスキップ
+            # つまり、同じファイルの別ページであればスキップしない
             main_page = llm_response["context"][0].metadata.get("page", None)
             if sub_file_path == main_file_path and sub_page_number == main_page:
                 continue
             
-            # 2. 重複チェック用キーを作成（パス + ページ番号）
+            # 2. 重複チェック用キーを「パス」＋「ページ番号」にする
             duplicate_key = f"{sub_file_path}_{sub_page_number}"
-            
-            # 重複チェック用のリストにキーが含まれていればスキップ
             if duplicate_key in duplicate_check_list:
                 continue
-
-            # 重複チェック用のリストにキーを順次追加
             duplicate_check_list.append(duplicate_key)
             
-            # --- 以下、sub_choicesに追加する既存処理 ---
+            # 3. リストに追加（ページ番号の有無で辞書を作成）
             if sub_page_number is not None:
                 sub_choice = {"source": sub_file_path, "page_number": sub_page_number}
             else:
