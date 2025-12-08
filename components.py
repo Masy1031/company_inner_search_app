@@ -182,17 +182,47 @@ def display_search_llm_response(llm_response):
 
         # ドキュメントが2件以上検索できた場合（サブドキュメントが存在する場合）のみ、サブドキュメントのありかを一覧表示
         # 「source_documents」内のリストの2番目以降をスライスで参照（2番目以降がなければfor文内の処理は実行されない）
-        for document in llm_response["context"][1:]:
-            # ドキュメントのファイルパスを取得
-            sub_file_path = document.metadata["source"]
+        # for document in llm_response["context"][1:]:
+        #     # ドキュメントのファイルパスを取得
+        #     sub_file_path = document.metadata["source"]
 
-            # メインドキュメントのファイルパスと重複している場合、処理をスキップ（表示しない）
-            if sub_file_path == main_file_path:
+        #     # メインドキュメントのファイルパスと重複している場合、処理をスキップ（表示しない）
+        #     if sub_file_path == main_file_path:
+        #         continue
+            
+        #     # 同じファイル内の異なる箇所を参照した場合、2件目以降のファイルパスに重複が発生する可能性があるため、重複を除去
+        #     if sub_file_path in duplicate_check_list:
+        #         continue
+        
+        # 修正
+        for document in llm_response["context"][1:]:
+            # ドキュメントのファイルパスとページ番号を取得
+            sub_file_path = document.metadata["source"]
+            # getメソッドを使い、pageがない場合（txtなど）に備える
+            sub_page_number = document.metadata.get("page", None)
+
+            # 1. メインドキュメントと「パス」かつ「ページ番号」が一致する場合のみスキップ
+            main_page = llm_response["context"][0].metadata.get("page", None)
+            if sub_file_path == main_file_path and sub_page_number == main_page:
                 continue
             
-            # 同じファイル内の異なる箇所を参照した場合、2件目以降のファイルパスに重複が発生する可能性があるため、重複を除去
-            if sub_file_path in duplicate_check_list:
+            # 2. 重複チェック用キーを作成（パス + ページ番号）
+            duplicate_key = f"{sub_file_path}_{sub_page_number}"
+            
+            # 重複チェック用のリストにキーが含まれていればスキップ
+            if duplicate_key in duplicate_check_list:
                 continue
+
+            # 重複チェック用のリストにキーを順次追加
+            duplicate_check_list.append(duplicate_key)
+            
+            # --- 以下、sub_choicesに追加する既存処理 ---
+            if sub_page_number is not None:
+                sub_choice = {"source": sub_file_path, "page_number": sub_page_number}
+            else:
+                sub_choice = {"source": sub_file_path}
+            
+            sub_choices.append(sub_choice)
 
             # 重複チェック用のリストにファイルパスを順次追加
             duplicate_check_list.append(sub_file_path)
@@ -297,38 +327,62 @@ def display_contact_llm_response(llm_response):
         file_info_list = []
 
         # LLMが回答生成の参照元として使ったドキュメントの一覧が「context」内のリストの中に入っているため、ループ処理
+        # for document in llm_response["context"]:
+        #     # ファイルパスを取得
+        #     file_path = document.metadata["source"]
+        #     # ファイルパスの重複は除去
+        #     if file_path in file_path_list:
+        #         continue
+
+        #     # ページ番号が取得できた場合のみ、ページ番号を表示（ドキュメントによっては取得できない場合がある）
+        #     if "page" in document.metadata:
+        #         # ページ番号を取得
+        #         page_number = document.metadata["page"]
+        #         # 「ファイルパス」と「ページ番号」
+        #         # file_info = f"{file_path}"
+        #         # 【問題4】修正後
+        #         if "page" in document.metadata:
+        #             page_number = document.metadata["page"]
+        #             # 指定の形式 (ページNo.X) で表示
+        #             file_info = f"{file_path}(ページNo.{page_number + 1})"
+        #         else:
+        #             file_info = f"{file_path}"
+        #     else:
+        #         # 「ファイルパス」のみ
+        #         file_info = f"{file_path}"
+
+        #     # 参照元のありかに応じて、適したアイコンを取得
+        #     icon = utils.get_source_icon(file_path)
+        #     # ファイル情報を表示
+        #     st.info(file_info, icon=icon)
+
+        #     # 重複チェック用に、ファイルパスをリストに順次追加
+        #     file_path_list.append(file_path)
+        #     # ファイル情報をリストに順次追加
+        #     file_info_list.append(file_info)
+
+        # --- 修正後：display_contact_llm_response 内 ---
         for document in llm_response["context"]:
-            # ファイルパスを取得
             file_path = document.metadata["source"]
-            # ファイルパスの重複は除去
+            
+            # 同じファイルパスの重複表示を防ぐ
             if file_path in file_path_list:
                 continue
 
-            # ページ番号が取得できた場合のみ、ページ番号を表示（ドキュメントによっては取得できない場合がある）
+            # 1. 表示および保存用の文字列を作成（ロジックの整理）
             if "page" in document.metadata:
-                # ページ番号を取得
                 page_number = document.metadata["page"]
-                # 「ファイルパス」と「ページ番号」
-                # file_info = f"{file_path}"
-                # 【問題4】修正後
-                if "page" in document.metadata:
-                    page_number = document.metadata["page"]
-                    # 指定の形式 (ページNo.X) で表示
-                    file_info = f"{file_path}(ページNo.{page_number + 1})"
-                else:
-                    file_info = f"{file_path}"
+                # 指定の形式 (ページNo.X) で文字列を作成
+                file_info = f"{file_path}(ページNo.{page_number + 1})"
             else:
-                # 「ファイルパス」のみ
                 file_info = f"{file_path}"
 
-            # 参照元のありかに応じて、適したアイコンを取得
+            # 2. 画面に参照元を表示
             icon = utils.get_source_icon(file_path)
-            # ファイル情報を表示
             st.info(file_info, icon=icon)
 
-            # 重複チェック用に、ファイルパスをリストに順次追加
+            # 3. リストに情報を追加して保存（ここをループの最後で確実に行う）
             file_path_list.append(file_path)
-            # ファイル情報をリストに順次追加
             file_info_list.append(file_info)
 
     # 表示用の会話ログに格納するためのデータを用意
