@@ -224,8 +224,8 @@ def display_search_llm_response(llm_response):
             
             sub_choices.append(sub_choice)
 
-            # 重複チェック用のリストにファイルパスを順次追加
-            duplicate_check_list.append(sub_file_path)
+            # # 重複チェック用のリストにファイルパスを順次追加
+            # duplicate_check_list.append(sub_file_path)
             
             # ページ番号が取得できない場合のための分岐処理
             if "page" in document.metadata:
