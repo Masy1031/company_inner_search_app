@@ -256,6 +256,9 @@ def file_load(path, docs_all):
                 # 「氏名: 〇〇, 部署: △△」といった形式で一行ずつ連結
                 line = " / ".join([f"{col}: {val}" for col, val in row.items()])
                 combined_text += line + "\n"
+
+                # 【課題4】修正:区切り線アプローチ 
+                combined_text += "-------\n"
             
             # 4. 1つの巨大なドキュメントとして追加
             # これにより、K=5の検索枠を消費せずに全員分の情報をLLMへ渡せます

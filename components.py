@@ -357,12 +357,24 @@ def display_contact_llm_response(llm_response):
         #     # ファイル情報をリストに順次追加
         #     file_info_list.append(file_info)
 
+        # 【問題4】参照元のファイルパスの一覧を格納するためのリストを用意
+        duplicate_check_keys = [] # ページ+ファイルパスで重複チェックを行うためのリスト
+        file_info_list = []       # 画面表示用のファイル情報リスト
+
         # --- 修正後：display_contact_llm_response 内 ---
         for document in llm_response["context"]:
             file_path = document.metadata["source"]
+            page_number = document.metadata.get("page", None) # ページ番号を取得（メタデータにない場合はNone）
             
-            # 同じファイルパスの重複表示を防ぐ
-            if file_path in file_path_list:
+            # 重複チェックキーを「ファイルパス + ページ番号」で作成
+            duplicate_key = f"{file_path}_{page_number}"
+
+            # # 同じファイルパスの重複表示を防ぐ
+            # if file_path in file_path_list:
+            #     continue
+            
+            # ★★★ 修正箇所: 重複チェックとスキップのロジックを追加 ★★★
+            if duplicate_key in duplicate_check_keys:
                 continue
 
             # 1. 表示および保存用の文字列を作成（ロジックの整理）
@@ -377,9 +389,14 @@ def display_contact_llm_response(llm_response):
             icon = utils.get_source_icon(file_path)
             st.info(file_info, icon=icon)
 
-            # 3. リストに情報を追加して保存（ここをループの最後で確実に行う）
-            file_path_list.append(file_path)
-            file_info_list.append(file_info)
+            # 【問題4】追加
+            # 3. リストに情報を追加
+            duplicate_check_keys.append(duplicate_key) # 重複チェック用に追加
+            file_info_list.append(file_info)          # 画面表示用のリストに追加
+
+            # # リストに情報を追加して保存（ここをループの最後で確実に行う）
+            # file_path_list.append(file_path)
+            # file_info_list.append(file_info)
 
     # 表示用の会話ログに格納するためのデータを用意
     # - 「mode」: モード（「社内文書検索」or「社内問い合わせ」）
